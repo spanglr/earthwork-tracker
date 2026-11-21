@@ -6,7 +6,7 @@ import { effective, pointInPolygon, polygonArea, polygonCentroid } from "../lib/
 import { useDays, useStore, useTin } from "../store";
 import type { Basis, Ditch, Pt, Target, TargetMeasure } from "../types";
 import { boxOf, Handle, pathD, PlanCanvas, usePlan } from "./PlanCanvas";
-import { Terrain3D } from "./Terrain3D";
+import { Terrain3D, type Look } from "./Terrain3D";
 
 const value = (t: DitchTotals | undefined, m: Metric) => (t ? t[m] : 0);
 const fmtDay = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
@@ -24,6 +24,25 @@ export function CrewView() {
   const [draft, setDraft] = useState<Pt[]>([]);
   const [hover, setHover] = useState<Pt | null>(null);
   const [exag, setExag] = useState(1);
+  // how the 3D ground is drawn; remembered on this computer
+  const [look, setLookState] = useState<Look>(() => {
+    try {
+      return localStorage.getItem("earthwork.look") === "dirt" ? "dirt" : "survey";
+    } catch {
+      return "survey";
+    }
+  });
+  const setLook = (l: Look) => {
+    setLookState(l);
+    try {
+      localStorage.setItem("earthwork.look", l);
+    } catch {
+      /* remembered for this visit only */
+    }
+  };
+  // contour lines in 3D: on in the survey look, off in the dirt look, unless the user chooses
+  const [lines3d, setLines3d] = useState<boolean | null>(null);
+  const showLines3d = lines3d ?? look === "survey";
 
   const ditchIds = useMemo(() => project.ditches.map((d) => d.id), [project.ditches]);
   const totals = useMemo(() => computeTotals(project.tickets, ditchIds, current), [project.tickets, ditchIds, current]);
@@ -162,7 +181,11 @@ export function CrewView() {
         <section className="pane">
           <header className="pane-head">
             <h2>3D</h2>
-            <span className="hint">Drag to orbit, scroll to zoom, right-drag to pan</span>
+            <div className="seg" role="group" aria-label="How the ground is drawn">
+              <button className={look === "survey" ? "on" : ""} onClick={() => setLook("survey")} title="Plain model with contour lines">Survey</button>
+              <button className={look === "dirt" ? "on" : ""} onClick={() => setLook("dirt")} title="The same surface drawn as soil, with sun and shadows">Dirt</button>
+            </div>
+            <label className="chk"><input type="checkbox" checked={showLines3d} onChange={(e) => setLines3d(e.target.checked)} /> Contours</label>
             <span className="spacer" />
             <label className="sel">
               Vertical scale{" "}
@@ -176,7 +199,7 @@ export function CrewView() {
           </header>
           <div className="three">
             {tin && tin.bbox ? (
-              <Terrain3D tin={tin} contours={project.contours} ditches={project.ditches} ditchStyle={ditchStyle} selectedDitchId={selectedId} onSelectDitch={selectDitch} exaggeration={exag} />
+              <Terrain3D tin={tin} contours={project.contours} ditches={project.ditches} ditchStyle={ditchStyle} selectedDitchId={selectedId} onSelectDitch={selectDitch} exaggeration={exag} look={look} showLines={showLines3d} />
             ) : (
               <div className="empty small">
                 <p>No terrain yet. Accept contours in <b>Terrain review</b> to build the surface.</p>
@@ -185,7 +208,10 @@ export function CrewView() {
             {exag !== 1 && <div className="exag-flag">Vertical scale exaggerated {exag}×. Slopes look {exag}× steeper than they are.</div>}
             {tin?.bbox && (
               <div className="three-note">
-                Surveyed existing ground from the plan ({tin.bbox.minZ}–{tin.bbox.maxZ} ft). Gaps are areas the sheet gives no contours for.
+                {look === "dirt"
+                  ? `Same surveyed ground (${tin.bbox.minZ}–${tin.bbox.maxZ} ft), drawn as soil. Grey areas have no contours on the sheet. Soil colour is for looks only and tickets do not reshape the ground.`
+                  : `Surveyed existing ground from the plan (${tin.bbox.minZ}–${tin.bbox.maxZ} ft). Gaps are areas the sheet gives no contours for.`}
+                <span className="muted"> Drag to orbit, scroll to zoom, right-drag to pan.</span>
               </div>
             )}
           </div>

@@ -48,6 +48,10 @@ export interface Tin {
   y: Float64Array;
   z: Float64Array;
   triangles: Uint32Array;
+  /** Triangles left out of the surface because an edge was longer than the gap
+   *  limit.  They are never sampled or measured; the realistic 3D look draws
+   *  them as plain "not modelled" pads so the block of ground has no holes. */
+  gapTriangles: Uint32Array;
   feetPerPoint: number;
   bbox: { minX: number; minY: number; maxX: number; maxY: number; minZ: number; maxZ: number } | null;
   stats: { contours: number; points: number; triangles: number; droppedLongEdge: number; areaSqFt: number; heightConflicts: number };
@@ -97,6 +101,7 @@ export function buildTin(project: Pick<Project, "contours" | "calibration" | "te
   const y = Float64Array.from(ys);
   const z = Float64Array.from(zs);
   const keep: number[] = [];
+  const gaps: number[] = [];
   let dropped = 0;
   let areaPt = 0;
   if (n >= 3) {
@@ -117,6 +122,7 @@ export function buildTin(project: Pick<Project, "contours" | "calibration" | "te
       if (area < 1e-6) continue;
       if (ab > max2 || bc > max2 || ca > max2) {
         dropped++;
+        gaps.push(a, b, c);
         continue;
       }
       keep.push(a, b, c);
@@ -124,6 +130,7 @@ export function buildTin(project: Pick<Project, "contours" | "calibration" | "te
     }
   }
   const triangles = Uint32Array.from(keep);
+  const gapTriangles = Uint32Array.from(gaps);
 
   let bbox: Tin["bbox"] = null;
   if (triangles.length) {
@@ -174,7 +181,7 @@ export function buildTin(project: Pick<Project, "contours" | "calibration" | "te
   }
 
   return {
-    x, y, z, triangles, feetPerPoint: fpp, bbox, sample,
+    x, y, z, triangles, gapTriangles, feetPerPoint: fpp, bbox, sample,
     stats: { contours: used, points: n, triangles: triangles.length / 3, droppedLongEdge: dropped, areaSqFt: areaPt * fpp * fpp, heightConflicts: conflicts },
   };
 }

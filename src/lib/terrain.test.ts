@@ -90,6 +90,16 @@ describe.skipIf(!havePractice)("Practice demo terrain", () => {
     expect(tin.stats.contours).toBe(11);
   });
 
+  it("keeps the left-out triangles for drawing but never measures on them", () => {
+    expect(tin.gapTriangles.length / 3).toBe(tin.stats.droppedLongEdge);
+    expect(tin.gapTriangles.length).toBeGreaterThan(0);
+    // centre of the first gap triangle: outside the measured surface unless a kept triangle also covers it
+    const [a, b, c] = [tin.gapTriangles[0], tin.gapTriangles[1], tin.gapTriangles[2]];
+    const gx = (tin.x[a] + tin.x[b] + tin.x[c]) / 3;
+    const gy = (tin.y[a] + tin.y[b] + tin.y[c]) / 3;
+    expect(tin.sample(gx, gy)).toBeNull();
+  });
+
   it("matches both printed spot elevations within half a contour interval", () => {
     for (const p of practice.checkPoints) {
       const z = tin.sample(p.x, p.y);

@@ -98,6 +98,9 @@ In both demos the ditch boundaries and haul tickets are made-up samples.
 - **PDF underlay**: tick or untick it above the plan.
 - **Vertical scale**: 3D is true scale by default. If you choose 2× or more, a
   flag on the view says the slopes are exaggerated.
+- **Look**: *Survey* is the plain model with contour lines. *Dirt* draws the
+  same surface as soil, with a sun, shadows, a sky and solid sides. The choice
+  is remembered on your computer.
 - **Draw ditch**: press the button, click each corner, double-click (or press
   Enter) to finish. Then set its ID in the side panel.
 - **Edit shape**: drag a corner, click a small grey point to add a corner,
@@ -106,6 +109,18 @@ In both demos the ditch boundaries and haul tickets are made-up samples.
   outbound hauling, net fill, net cut) and on what volume basis. A percentage
   is shown only when the target's basis matches the tickets' basis, because a
   cubic yard in a truck is not a cubic yard in the ground.
+
+![The dirt look: the same surface drawn as soil](docs/dirt-look.jpg)
+
+The dirt look changes only how the ground is drawn:
+
+- The shape is the same reviewed surface, including its flat facets between
+  contours. Nothing is smoothed.
+- Areas the sheet gives no contours for are plain grey pads, so they are not
+  mistaken for surveyed ground. In the survey look they are holes.
+- The soil pattern is made in code and is for looks only. It does not
+  represent a soil type or the condition of the ground.
+- Ditches become a light tint with a white outline so the soil shows through.
 
 The ground in 3D is the surveyed baseline from the plan. Colour shows hauling
 progress. Tickets do not say where in a ditch the dirt went or how high the
@@ -313,6 +328,7 @@ samples/             practice sheet, practice scan, example CSV
 source-pdf/          where the Pittsburgh PDF goes (not in the repository)
 src/                 React + TypeScript + React Three Fiber app
   lib/terrain.ts       triangulation and surface sampling
+  lib/dirtTexture.ts   soil colour and grain for the dirt look, made in code
   lib/haul.ts          CSV checks, totals, targets
   components/          the four tabs, plan canvas, 3D view
 projects/            your projects, created on first run (not in the repository)
