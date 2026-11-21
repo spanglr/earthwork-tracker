@@ -1,0 +1,15 @@
+node_modules/
+.venv/
+dist/
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+
+# runtime data: one folder per project, created on first run
+projects/
+
+# third-party plan sheets are not redistributed with the code (see source-pdf/README.md)
+source-pdf/*
+!source-pdf/README.md
+docs/overlay-review.png

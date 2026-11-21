@@ -1,0 +1,4 @@
+ticket_id,date,from_id,to_id,volume_yd3
+T-1001,2026-11-16,OFFSITE,D-01,100
+T-1002,2026-11-17,D-01,D-02,30
+T-1003,2026-11-17,D-02,OFFSITE,10

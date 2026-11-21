@@ -1,0 +1,156 @@
+{
+  "name": "Practice site (invented terrain demo)",
+  "note": "Demo project on an invented practice sheet. The terrain, the ditch boundaries and the haul tickets are all made up.",
+  "sourcePdf": "samples/practice-plan.pdf",
+  "sheet": "Practice plan, printed scale 1 inch = 20 ft, 2 ft contours",
+  "page": 1,
+  "calibration": {
+    "a": [
+      60,
+      572
+    ],
+    "b": [
+      420,
+      572
+    ],
+    "distanceFt": 100,
+    "printedScale": {
+      "inches": 1,
+      "feet": 20
+    },
+    "note": "0 and 100 ft ends of the printed scale bar. 360.00 pt for 100 ft, which equals the printed scale of 1 inch = 20 ft."
+  },
+  "contourInterval": 2,
+  "indexInterval": 10,
+  "terrain": {
+    "maxEdgeFt": 25,
+    "sampleFt": 2
+  },
+  "extraction": {
+    "roles": {
+      "rgb(140,89,51)/w1.40": "existing-index",
+      "rgb(140,89,51)/w0.60": "existing-intermediate"
+    },
+    "labelStyles": null,
+    "existingLabelSlant": "any",
+    "elevationRange": [
+      90,
+      130
+    ]
+  },
+  "review": {
+    "acceptUnflagged": true,
+    "decisions": [],
+    "adopt": []
+  },
+  "checkPoints": [
+    {
+      "id": "CP-1",
+      "label": "107.4",
+      "x": 200,
+      "y": 216,
+      "snapToMark": true,
+      "printed": 107.4,
+      "refersTo": "existing-ground",
+      "role": "independent",
+      "where": "Spot elevation in the west half of the sheet",
+      "note": "Printed spot elevation. Not used to build the surface."
+    },
+    {
+      "id": "CP-2",
+      "label": "113.2",
+      "x": 560,
+      "y": 343,
+      "snapToMark": true,
+      "printed": 113.2,
+      "refersTo": "existing-ground",
+      "role": "independent",
+      "where": "Spot elevation in the east half of the sheet",
+      "note": "Printed spot elevation. Not used to build the surface."
+    }
+  ],
+  "ditches": [
+    {
+      "id": "D-01",
+      "name": "Sample ditch, north-west",
+      "sample": true,
+      "polygon": [
+        [
+          130,
+          150
+        ],
+        [
+          300,
+          160
+        ],
+        [
+          310,
+          250
+        ],
+        [
+          140,
+          240
+        ]
+      ],
+      "target": {
+        "quantity": 150,
+        "measures": "inbound",
+        "basis": "loose"
+      }
+    },
+    {
+      "id": "D-02",
+      "name": "Sample ditch, east",
+      "sample": true,
+      "polygon": [
+        [
+          440,
+          290
+        ],
+        [
+          610,
+          300
+        ],
+        [
+          600,
+          400
+        ],
+        [
+          450,
+          390
+        ]
+      ],
+      "target": {
+        "quantity": 40,
+        "measures": "net_fill",
+        "basis": "compacted"
+      }
+    },
+    {
+      "id": "D-03",
+      "name": "Sample ditch, south",
+      "sample": true,
+      "polygon": [
+        [
+          240,
+          430
+        ],
+        [
+          400,
+          425
+        ],
+        [
+          410,
+          495
+        ],
+        [
+          250,
+          500
+        ]
+      ],
+      "target": null
+    }
+  ],
+  "ticketsCsv": "samples/haul-tickets-example.csv",
+  "ticketBasis": "loose"
+}

@@ -1,0 +1,40 @@
+{
+  "name": "earthwork-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "setup": "python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install -r backend/requirements.txt && npm install",
+    "start": "concurrently -k -n api,web -c blue,green \"npm:api\" \"npm:web\"",
+    "api": ".venv/bin/python -m uvicorn server:app --app-dir backend --host 127.0.0.1 --port 8787",
+    "web": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:python": ".venv/bin/python -m unittest discover -s backend/tests -v",
+    "demo:rebuild": ".venv/bin/python backend/demo.py",
+    "overlay": ".venv/bin/python backend/tools/render_overlay.py"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "@types/node": "^26.6.6",
+    "delaunator": "^5.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/delaunator": "^5.0.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  },
+  "description": "Turn a civil grading-plan PDF into a reviewed 3D terrain and track dirt hauled into and out of work regions."
+}

@@ -1,0 +1,370 @@
+{
+  "name": "Rhythm Square, 2239 Centre Ave, Pittsburgh (demo)",
+  "note": "Demo project. Terrain comes from sheet C-2.1 of the public zoning submission. The ditch boundaries and haul tickets are made-up samples, not job data.",
+  "sourcePdf": "source-pdf/rhythm-square-zba.pdf",
+  "sourceUrl": "https://www.pittsburghpa.gov/files/assets/city/v/1/dcp/documents/zoning-board-of-adjustment/24278_zba_040_of_2024_dcp-zdr-2023-08746_2239_centre_ave.pdf",
+  "sheet": "C-2.1 Grading Plan, dated 08/17/2023, printed scale 1 inch = 10 ft",
+  "page": 3,
+  "calibration": {
+    "a": [
+      1898.34,
+      1624.8
+    ],
+    "b": [
+      2186.34,
+      1624.8
+    ],
+    "distanceFt": 40,
+    "printedScale": {
+      "inches": 1,
+      "feet": 10
+    },
+    "note": "0 and 40 ft ticks of the printed graphic scale bar (vector end points). 288.00 pt for 40 ft, which equals the title-block scale of 1 inch = 10 ft."
+  },
+  "contourInterval": 1,
+  "indexInterval": 5,
+  "terrain": {
+    "maxEdgeFt": 35,
+    "sampleFt": 2
+  },
+  "extraction": {
+    "roles": {
+      "rgb(128,128,128)/w0.78": "existing-index",
+      "rgb(204,204,204)/w0.72": "existing-intermediate"
+    },
+    "labelStyles": null,
+    "existingLabelSlant": "italic",
+    "elevationRange": [
+      900,
+      1100
+    ]
+  },
+  "review": {
+    "acceptUnflagged": true,
+    "decisions": [
+      {
+        "near": [
+          1059.96,
+          241.8
+        ],
+        "action": "confirm",
+        "elevation": 998,
+        "note": "Closed loop inside the 997 line at the top of Hallett Street. Counting could not settle it because the 997 line is masked along its south side. Printed spots HOLD ELEV 998.62 and 998.52 fall inside the loop, so it is the 998 line."
+      },
+      {
+        "near": [
+          619.32,
+          381.0
+        ],
+        "action": "confirm",
+        "elevation": 993,
+        "note": "Narrow hairpin that shares its lower edge with the 993 line, between the 994 and 993 lines. It is a nose in the 993 contour; both of its sides are the same height so counting cannot settle it."
+      },
+      {
+        "near": [
+          817.0,
+          1150.0
+        ],
+        "action": "reject",
+        "note": "Straight line inside the building footprint (interior line work drawn in the contour colour)."
+      },
+      {
+        "near": [
+          782.82,
+          1035.54
+        ],
+        "action": "reject",
+        "note": "Building wall line work drawn in the contour colour."
+      },
+      {
+        "near": [
+          795.12,
+          1206.9
+        ],
+        "action": "reject",
+        "note": "Door/step line work at the south-west building corner, not a contour."
+      },
+      {
+        "near": [
+          1138.38,
+          843.84
+        ],
+        "action": "reject",
+        "note": "Line work inside the building addition, not a contour."
+      },
+      {
+        "near": [
+          1115.52,
+          1188.12
+        ],
+        "action": "reject",
+        "note": "Building line work, not a contour."
+      },
+      {
+        "near": [
+          877.26,
+          702.84
+        ],
+        "action": "reject",
+        "note": "Interior building line work, not a contour."
+      },
+      {
+        "near": [
+          877.62,
+          645.3
+        ],
+        "action": "reject",
+        "note": "Interior building line work, not a contour."
+      },
+      {
+        "near": [
+          986.52,
+          641.16
+        ],
+        "action": "reject",
+        "note": "Interior building line work, not a contour."
+      },
+      {
+        "near": [
+          885.66,
+          645.36
+        ],
+        "action": "reject",
+        "note": "Interior building line work, not a contour."
+      },
+      {
+        "near": [
+          1086.6,
+          675.06
+        ],
+        "action": "reject",
+        "note": "Interior building line work, not a contour."
+      }
+    ],
+    "adopt": [
+      {
+        "at": [
+          1208.3,
+          470
+        ],
+        "surface": "proposed",
+        "elevation": 998,
+        "note": "Proposed contour drawn as a solid black line on the new 2:1 slope. Adopted from the PDF's own geometry; height 998 read from the upright label printed beside it at the retaining wall. Kept as proposed grade, not part of the existing-ground terrain."
+      },
+      {
+        "at": [
+          1306.9,
+          470
+        ],
+        "surface": "proposed",
+        "elevation": 997,
+        "note": "Proposed contour drawn as a solid black line on the new 2:1 slope. Adopted from the PDF's own geometry; height 997 read from the upright label printed beside it at the retaining wall. Kept as proposed grade, not part of the existing-ground terrain."
+      },
+      {
+        "at": [
+          1336.2,
+          470
+        ],
+        "surface": "proposed",
+        "elevation": 996,
+        "note": "Proposed contour drawn as a solid black line on the new 2:1 slope. Adopted from the PDF's own geometry; height 996 read from the upright label printed beside it at the retaining wall. Kept as proposed grade, not part of the existing-ground terrain."
+      },
+      {
+        "at": [
+          1350.4,
+          470
+        ],
+        "surface": "proposed",
+        "elevation": 995,
+        "note": "Proposed contour drawn as a solid black line on the new 2:1 slope. Adopted from the PDF's own geometry; height 995 read from the upright label printed beside it at the retaining wall. Kept as proposed grade, not part of the existing-ground terrain."
+      },
+      {
+        "at": [
+          1364.8,
+          470
+        ],
+        "surface": "proposed",
+        "elevation": 994,
+        "note": "Proposed contour drawn as a solid black line on the new 2:1 slope. Adopted from the PDF's own geometry; height 994 read from the upright label printed beside it at the retaining wall. Kept as proposed grade, not part of the existing-ground terrain."
+      }
+    ]
+  },
+  "checkPoints": [
+    {
+      "id": "CP-1",
+      "label": "HOLD ELEV 997",
+      "x": 1136.04,
+      "y": 232.32,
+      "printed": 997,
+      "refersTo": "existing-ground",
+      "role": "independent",
+      "where": "Hallett Street, south edge of pavement, at the north-east corner of the new parking apron",
+      "note": "Existing elevation to be held. Not used to build the surface."
+    },
+    {
+      "id": "CP-2",
+      "label": "HOLD EX 969",
+      "x": 1391.46,
+      "y": 1187.1,
+      "printed": 969,
+      "refersTo": "existing-ground",
+      "role": "independent",
+      "where": "Centre Avenue frontage, back of sidewalk, about 32 ft east of the building's south-east corner",
+      "note": "Existing elevation to be held. Not used to build the surface."
+    },
+    {
+      "id": "CP-3",
+      "label": "HOLD EX 968",
+      "x": 1452.18,
+      "y": 1272.0,
+      "printed": 968,
+      "refersTo": "existing-ground",
+      "role": "independent",
+      "where": "Centre Avenue curb line, south-east corner of the frontage",
+      "note": "Existing elevation to be held. Not used to build the surface."
+    },
+    {
+      "id": "CP-4",
+      "label": "HOLD ELEV 998.62",
+      "x": 729.96,
+      "y": 234.81,
+      "printed": 998.62,
+      "refersTo": "existing-ground",
+      "role": "evidence",
+      "where": "Hallett Street, south edge of pavement, at the north-west corner of the new parking apron",
+      "note": "Used as evidence when the 998 loop was confirmed by hand, so it is not an independent check. It sits above the highest contour (998); a contour-only surface is flat there."
+    },
+    {
+      "id": "CP-5",
+      "label": "EX 969.67 TOP CURB (SURVEY)",
+      "x": 1175.0,
+      "y": 1266.5,
+      "printed": 969.67,
+      "refersTo": "existing-curb",
+      "role": "excluded",
+      "where": "Centre Avenue, top of existing curb in front of the building",
+      "note": "Top of curb, not ground: a curb top stands several inches above the gutter line the contours follow. Shown for reference only."
+    },
+    {
+      "id": "CP-6",
+      "label": "FFE 971.74 (SURVEY)",
+      "x": 808.0,
+      "y": 1187.0,
+      "printed": 971.74,
+      "refersTo": "floor",
+      "role": "excluded",
+      "where": "Building door at the south-west corner",
+      "note": "Finished floor elevation, not ground. Excluded."
+    },
+    {
+      "id": "CP-7",
+      "label": "TW998 / BW989",
+      "x": 1136.0,
+      "y": 509.0,
+      "printed": 998,
+      "refersTo": "wall",
+      "role": "excluded",
+      "where": "Retaining wall at the north-east corner of the building",
+      "note": "Top and bottom of wall, not ground. Excluded."
+    },
+    {
+      "id": "CP-8",
+      "label": "968.65",
+      "x": 1454.1,
+      "y": 1183.5,
+      "printed": 968.65,
+      "refersTo": "proposed-grade",
+      "role": "excluded",
+      "where": "New concrete pad, south-east corner",
+      "note": "Plain spot elevations on this sheet are proposed finished grade (note 2 on the sheet), not existing ground. Excluded."
+    }
+  ],
+  "ditches": [
+    {
+      "id": "D-01",
+      "name": "Sample ditch, west slope",
+      "sample": true,
+      "polygon": [
+        [
+          300,
+          545
+        ],
+        [
+          520,
+          545
+        ],
+        [
+          600,
+          600
+        ],
+        [
+          600,
+          690
+        ],
+        [
+          300,
+          690
+        ]
+      ],
+      "target": {
+        "quantity": 150,
+        "measures": "inbound",
+        "basis": "loose"
+      }
+    },
+    {
+      "id": "D-02",
+      "name": "Sample ditch, east slope",
+      "sample": true,
+      "polygon": [
+        [
+          1200,
+          620
+        ],
+        [
+          1460,
+          600
+        ],
+        [
+          1480,
+          760
+        ],
+        [
+          1210,
+          800
+        ]
+      ],
+      "target": {
+        "quantity": 40,
+        "measures": "net_fill",
+        "basis": "compacted"
+      }
+    },
+    {
+      "id": "D-03",
+      "name": "Sample ditch, Centre Ave frontage",
+      "sample": true,
+      "polygon": [
+        [
+          1230,
+          1060
+        ],
+        [
+          1420,
+          1040
+        ],
+        [
+          1440,
+          1160
+        ],
+        [
+          1240,
+          1180
+        ]
+      ],
+      "target": null
+    }
+  ],
+  "ticketsCsv": "samples/haul-tickets-example.csv",
+  "ticketBasis": "loose"
+}
