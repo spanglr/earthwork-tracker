@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
+import extract  # noqa: E402
 import pdfgeom  # noqa: E402
 import projects  # noqa: E402
 
@@ -118,12 +119,20 @@ def build(force: bool = True, name: str = "pittsburgh") -> Dict[str, Any]:
     rv = cfg["review"]
     for c in project["contours"]:
         a = c["auto"]
-        if rv.get("acceptUnflagged") and a["elevation"] is not None and not a["flags"] and c["surface"] == "existing":
-            c["review"] = {"status": "accepted", "elevation": None, "confirmed": False,
-                           "note": "Accepted in bulk: automatic height with no warnings."}
+        flags = [f for f in a["flags"] if not (rv.get("acceptExtended") and f == extract.EXTENDED_FLAG)]
+        if rv.get("acceptUnflagged") and a["elevation"] is not None and not flags and c["surface"] == "existing":
+            note = "Accepted in bulk: automatic height with no warnings."
+            if a["flags"]:
+                note = "Accepted in bulk although the height was only continued past the labeled lines. " + rv.get("acceptExtendedNote", "")
+            c["review"] = {"status": "accepted", "elevation": None, "confirmed": False, "note": note.strip()}
     paths = projects.page_paths(project)
     for d in rv.get("decisions", []):
-        c = nearest_contour(project, d["near"])
+        try:
+            c = nearest_contour(project, d["near"])
+        except RuntimeError:
+            if d["action"] == "reject":
+                continue  # the false candidate this entry rejects is no longer produced
+            raise
         if d["action"] == "reject":
             c["review"] = {"status": "rejected", "elevation": None, "confirmed": False, "note": d["note"]}
         elif d["action"] == "confirm":

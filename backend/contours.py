@@ -67,12 +67,13 @@ def contour_id(points: np.ndarray) -> str:
 # --------------------------------------------------------------------------- 1. chaining
 def chain_dashes(
     polys: Sequence[np.ndarray],
-    dash_gap: Optional[float],
+    dash_gap: Any,
     join_tol: float = 0.6,
     gap_tol: float = 0.9,
     max_turn_deg: float = 40.0,
     min_length: float = 30.0,
     max_join_turn_deg: float = 70.0,
+    short_gaps: bool = True,
 ) -> List[Dict[str, Any]]:
     """Join polylines that touch or that are separated by one dash gap.
 
@@ -84,6 +85,15 @@ def chain_dashes(
     n = len(polys)
     if n == 0:
         return []
+    # one gap, or several when the style holds more than one linetype scale
+    gaps_all = sorted(float(g) for g in (dash_gap if isinstance(dash_gap, (list, tuple)) else [dash_gap]) if g)
+    dash_gap = gaps_all[0] if gaps_all else None
+    max_gap = gaps_all[-1] if gaps_all else None
+
+    def gap_family(d: float) -> Optional[float]:
+        best = min(gaps_all, key=lambda g: abs(g - d)) if gaps_all else None
+        return best if best is not None and abs(best - d) <= gap_tol else None
+
     ends = np.array([p[0] for p in polys] + [p[-1] for p in polys])  # index e: poly e % n, start if e < n
     parent = list(range(2 * n))
     tree = cKDTree(ends)
@@ -109,29 +119,47 @@ def chain_dashes(
     degree = Counter(node)
 
     links: List[Tuple[int, int]] = []
+    regular: List[Optional[float]] = []  # which dash gap the link spans; None for an odd-sized join
     if dash_gap:
         free = [e for e in range(2 * n) if degree[node[e]] == 1 and not junction_end[e]]
         tang = {e: _end_tangent(polys[e % n], e < n) for e in free}
         free_set = set(free)
         cand: Dict[int, Tuple[float, int]] = {}
         for e in free:
-            for f in tree.query_ball_point(ends[e], dash_gap + gap_tol):
+            for f in tree.query_ball_point(ends[e], max_gap + gap_tol):
                 if f == e or f not in free_set or f % n == e % n:
                     continue
                 v = ends[f] - ends[e]
                 d = float(np.linalg.norm(v))
+                if d < 1e-6:
+                    continue
                 if d < dash_gap - gap_tol:
+                    # A shorter gap than the linetype's: plotters restart the
+                    # dash pattern at every bend of the line, leaving odd-sized
+                    # gaps there.  Join only if the two pieces clearly continue
+                    # one another.
+                    if not short_gaps or _angle(tang[e], -tang[f]) > 60:
+                        continue
+                    if d > 1.5 and (_angle(tang[e], v / d) > max_turn_deg or _angle(-tang[f], v / d) > max_turn_deg):
+                        continue
+                    score = _angle(tang[e], -tang[f]) + 5 + d
+                    if e not in cand or score < cand[e][0]:
+                        cand[e] = (score, f)
+                    continue
+                fam = gap_family(d)
+                if fam is None:
                     continue
                 v = v / d
                 a1, a2 = _angle(tang[e], v), _angle(-tang[f], v)
                 if a1 > max_turn_deg or a2 > max_turn_deg:
                     continue
-                score = a1 + a2 + abs(d - dash_gap) * 10
+                score = a1 + a2 + abs(d - fam) * 10 + d * 0.5
                 if e not in cand or score < cand[e][0]:
                     cand[e] = (score, f)
         for e, (_, f) in cand.items():
             if f in cand and cand[f][1] == e and e < f:
                 links.append((e, f))
+                regular.append(gap_family(float(np.linalg.norm(ends[f] - ends[e]))))
 
     # adjacency over nodes: poly edges + dash links
     adj: Dict[int, List[Tuple[str, int, int]]] = defaultdict(list)  # node -> (kind, id, other node)
@@ -170,6 +198,7 @@ def chain_dashes(
         pts: List[np.ndarray] = []
         used = set()
         n_links = 0
+        fam_count: Counter = Counter()
         dash_len = 0.0
         while True:
             step = next(((kind, idx, o) for kind, idx, o in adj[cur] if (kind, idx) not in used), None)
@@ -188,8 +217,11 @@ def chain_dashes(
                     seg = seg[1:]
                 pts.extend(seg)
                 dash_len += _length(polys[idx])
-            else:
+            elif regular[idx] is not None:
+                # only true dash gaps prove the piece belongs to a dashed line;
+                # joins across odd-sized gaps do not (hatching has those too)
                 n_links += 1
+                fam_count[regular[idx]] += 1
             cur = other
         if len(pts) < 2:
             continue
@@ -198,7 +230,8 @@ def chain_dashes(
             continue
         if _length(arr) < min_length:
             continue
-        chains.append({"points": arr, "dashGaps": n_links, "inkLengthPt": round(dash_len, 1), "closed": closed})
+        chains.append({"points": arr, "dashGaps": n_links, "inkLengthPt": round(dash_len, 1), "closed": closed,
+                       "gapFamily": fam_count.most_common(1)[0][0] if fam_count else None})
     return chains
 
 
@@ -222,6 +255,13 @@ def attach_labels(chains: List[Dict[str, Any]], labels: List[Dict[str, Any]], in
             lab["note"] = "not a multiple of the contour interval"
             continue
         center = np.array(lab["center"], dtype=float)
+        # A line that runs straight through the label (the label is printed
+        # over an unbroken line) is unambiguous and wins over everything else.
+        through = _line_through(chains, center, lab, lab.get("heightPt", 6) * 0.55, value, index_interval)
+        if through is not None:
+            chains[through[1]]["labels"].append({"label": lab["id"], "how": "printed on the line", "distancePt": round(through[0], 1)})
+            lab["attached"] = [through[1]]
+            continue
         reach = lab.get("widthPt", 16) / 2 + 3.5 * lab.get("heightPt", 6) + 2
         hits = []  # (distance, chain index, at_start)
         for ci, c in enumerate(chains):
@@ -262,33 +302,42 @@ def attach_labels(chains: List[Dict[str, Any]], labels: List[Dict[str, Any]], in
                 chains[ci]["labels"].append({"label": lab["id"], "how": "at the end of the line", "distancePt": round(d, 1)})
                 lab["attached"].append(ci)
             continue
-        # fallback: label drawn on / beside a continuous line
-        best = None
-        for ci, c in enumerate(chains):
-            if c.get("dead"):
-                continue
-            if c["kind"] == "index" and abs(value / index_interval - round(value / index_interval)) > 1e-6:
-                continue
-            p = c["points"]
-            a, b = p[:-1], p[1:]
-            ab = b - a
-            den = (ab * ab).sum(1)
-            den[den == 0] = 1
-            t = np.clip(((center - a) * ab).sum(1) / den, 0, 1)
-            dist = np.linalg.norm(a + ab * t[:, None] - center, axis=1)
-            k = int(dist.argmin())
-            if dist[k] > lab.get("heightPt", 6) * 1.3:
-                continue
-            seg = ab[k] / max(float(np.linalg.norm(ab[k])), 1e-9)
-            la = np.array([math.cos(lab["angle"]), math.sin(lab["angle"])])
-            if min(_angle(seg, la), _angle(-seg, la)) > 30:
-                continue
-            if best is None or dist[k] < best[0]:
-                best = (float(dist[k]), ci)
+        # fallback: label drawn beside a continuous line
+        best = _line_through(chains, center, lab, lab.get("heightPt", 6) * 1.3, value, index_interval)
         if best:
-            chains[best[1]]["labels"].append({"label": lab["id"], "how": "printed on the line", "distancePt": round(best[0], 1)})
+            chains[best[1]]["labels"].append({"label": lab["id"], "how": "printed beside the line", "distancePt": round(best[0], 1)})
             lab["attached"] = [best[1]]
     chains[:] = [c for c in chains if not c.get("dead")]
+
+
+def _line_through(chains, center, lab, max_dist, value, index_interval):
+    """Nearest contour passing within max_dist of a label and running the same
+    way as the lettering.  Returns (distance, chain index) or None."""
+    best = None
+    la = np.array([math.cos(lab["angle"]), math.sin(lab["angle"])])
+    for ci, c in enumerate(chains):
+        if c.get("dead"):
+            continue
+        if c["kind"] == "index" and abs(value / index_interval - round(value / index_interval)) > 1e-6:
+            continue
+        p = c["points"]
+        if p[:, 0].min() > center[0] + max_dist or p[:, 0].max() < center[0] - max_dist or p[:, 1].min() > center[1] + max_dist or p[:, 1].max() < center[1] - max_dist:
+            continue
+        a, b = p[:-1], p[1:]
+        ab = b - a
+        den = (ab * ab).sum(1)
+        den[den == 0] = 1
+        t = np.clip(((center - a) * ab).sum(1) / den, 0, 1)
+        dist = np.linalg.norm(a + ab * t[:, None] - center, axis=1)
+        k = int(dist.argmin())
+        if dist[k] > max_dist:
+            continue
+        seg = ab[k] / max(float(np.linalg.norm(ab[k])), 1e-9)
+        if min(_angle(seg, la), _angle(-seg, la)) > 30:
+            continue
+        if best is None or dist[k] < best[0]:
+            best = (float(dist[k]), ci)
+    return best
 
 
 # --------------------------------------------------------------------------- 3. inference
@@ -344,7 +393,8 @@ def _samples(points: np.ndarray, step: float) -> List[Tuple[np.ndarray, np.ndarr
     return out
 
 
-def infer_elevations(chains: List[Dict[str, Any]], interval: float, reach_pt: float, step_pt: float = 22.0, passes: int = 8) -> None:
+def infer_elevations(chains: List[Dict[str, Any]], interval: float, reach_pt: float, step_pt: float = 22.0, passes: int = 8,
+                     index_interval: Optional[float] = None) -> None:
     """Assign heights to unlabeled contours by counting lines between known ones.
 
     Along a short line drawn square across a contour, the neighbouring contours
@@ -361,6 +411,15 @@ def infer_elevations(chains: List[Dict[str, Any]], interval: float, reach_pt: fl
 
     def known(ci: int) -> Optional[float]:
         return chains[ci].get("elevation")
+
+    def kind_ok(ci: int, e: float) -> bool:
+        """Does height e suit the way this line is drawn (major or minor)?  A
+        count is only believed when every line it steps over fits."""
+        c = chains[ci]
+        if index_interval is None or c.get("mixedStyle") or c.get("kind") not in ("index", "intermediate"):
+            return True
+        is_index = abs(e / index_interval - round(e / index_interval)) < 1e-6
+        return (c["kind"] == "index") == is_index
 
     def first_known(seq: List[Tuple[float, int]], start: int = 0) -> Optional[int]:
         for i in range(start, len(seq)):
@@ -387,7 +446,15 @@ def infer_elevations(chains: List[Dict[str, Any]], interval: float, reach_pt: fl
                         steps = (a + 1) + (b + 1)
                         if abs(abs(ea - eb) - steps * interval) > 1e-6:
                             continue
-                        e = round(ea + (eb - ea) * (a + 1) / steps, 4)
+                        per = (eb - ea) / steps
+                        e = round(ea + per * (a + 1), 4)
+                        # every line stepped over must fit its major/minor drawing
+                        if not kind_ok(ci, e):
+                            continue
+                        if any(not kind_ok(plus[k][1], round(ea + per * (a - k), 4)) for k in range(a)):
+                            continue
+                        if any(not kind_ok(minus[k][1], round(e + per * (k + 1), 4)) for k in range(b)):
+                            continue
                         votes[e] += 1
                         detail[e] = {"between": sorted([ea, eb]), "linesBetween": steps - 1}
                     else:
@@ -403,6 +470,8 @@ def infer_elevations(chains: List[Dict[str, Any]], interval: float, reach_pt: fl
                             total += 1
                             per = (ej - ei) / (j - i)
                             e = round(ei - per * (i + 1), 4)
+                            if not kind_ok(ci, e) or any(not kind_ok(seq[k][1], round(ei - per * (i - k), 4)) for k in range(i)):
+                                continue
                             votes[e] += 1
                             detail[e] = {"continuedFrom": [ei, ej], "linesFromNearestKnown": i + 1}
                 if not votes:

@@ -138,7 +138,7 @@ export interface StyleRow {
   glyphLike: boolean;
 }
 
-export type StyleRole = "existing-index" | "existing-intermediate" | "proposed";
+export type StyleRole = "existing-index" | "existing-intermediate" | "existing-mixed" | "proposed";
 
 export interface ExtractionConfig {
   roles: Record<string, StyleRole>;

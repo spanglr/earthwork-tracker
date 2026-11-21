@@ -191,12 +191,16 @@ def text_words(page: fitz.Page) -> List[Dict[str, Any]]:
                     continue
                 r = fitz.Rect(span["bbox"]) * rot
                 r.normalize()
+                rgb = span.get("color", 0) or 0
+                font = span.get("font", "") or ""
                 out.append({
                     "text": txt,
                     "bbox": [round(r.x0, 2), round(r.y0, 2), round(r.x1, 2), round(r.y1, 2)],
                     "center": [round((r.x0 + r.x1) / 2, 2), round((r.y0 + r.y1) / 2, 2)],
                     "angle": ang,
                     "size": span.get("size", 0),
+                    "color": "rgb(%d,%d,%d)" % ((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255),
+                    "italic": bool(span.get("flags", 0) & 2) or "italic" in font.lower() or "oblique" in font.lower(),
                 })
     return out
 
@@ -228,6 +232,7 @@ def style_table(paths: List[VPath]) -> List[Dict[str, Any]]:
                         continue
                     ends.append(pts[-1]); tans.append(v / nv); owner.append(i)
         gap = None
+        gap_list: List[float] = []
         dashed = 0.0
         if len(ends) >= 8:
             ends_a, tans_a = np.array(ends), np.array(tans)
@@ -258,6 +263,22 @@ def style_table(paths: List[VPath]) -> List[Dict[str, Any]]:
                 if share > 0.4:
                     gap = float((edges[k] + edges[k + 1]) / 2)
                     dashed = float(share)
+                    # A style can carry more than one linetype scale (major
+                    # contours drawn with longer dashes and gaps than minors).
+                    # Keep every clear peak, most common first.
+                    need = max(12, 0.04 * len(gaps))
+                    peaks = []
+                    for j in range(len(hist)):
+                        tot = hist[max(0, j - 1):j + 2].sum()
+                        if hist[j] >= hist[max(0, j - 2):j + 3].max() and tot >= need:
+                            peaks.append((int(tot), float((edges[j] + edges[j + 1]) / 2)))
+                    # ...but only peaks that are the main gap scaled by a whole
+                    # factor (the same linetype at another scale).  Other peaks
+                    # come from hatching and lettering in the same style.
+                    def scaled(g: float) -> bool:
+                        r = max(g, gap) / min(g, gap)
+                        return abs(r - round(r)) < 0.06 and 1 <= round(r) <= 4
+                    gap_list = [gap] + [g for _, g in sorted(peaks, reverse=True) if abs(g - gap) > 0.5 and scaled(g)][:2]
         c = ps[0].color
         rows.append({
             "key": key,
@@ -267,6 +288,7 @@ def style_table(paths: List[VPath]) -> List[Dict[str, Any]]:
             "totalLengthPt": round(float(lens.sum()), 1),
             "medianSizePt": round(float(np.median(sizes)), 2),
             "dashGapPt": round(gap, 2) if gap else None,
+            "dashGapsPt": [round(g, 2) for g in gap_list],
             "dashedShare": round(dashed, 2),
             "glyphLike": bool(np.median(sizes) < 14 and np.median([sum(len(s) for s in p.strokes) for p in ps]) >= 4),
         })

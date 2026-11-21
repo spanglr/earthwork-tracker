@@ -41,6 +41,8 @@
   },
   "review": {
     "acceptUnflagged": true,
+    "acceptExtended": true,
+    "acceptExtendedNote": "On this sheet those lines (996, 997, 969, 968) were then checked against printed hold elevations that were not used to set any height.",
     "decisions": [
       {
         "near": [

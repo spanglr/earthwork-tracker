@@ -13,6 +13,7 @@ const KIND: Record<string, string> = {
 const ROLE_LABEL: Record<StyleRole, string> = {
   "existing-index": "Existing: index contours",
   "existing-intermediate": "Existing: intermediate contours",
+  "existing-mixed": "Existing: major and minor in one style",
   proposed: "Proposed contours",
 };
 
@@ -123,6 +124,10 @@ function ProjectSteps({ run, busy, onReview }: { run(label: string, fn: () => Pr
     const r = project.extraction?.config.elevationRange;
     return r ? [String(r[0]), String(r[1])] : ["", ""];
   });
+  // dash gap typed by the operator for a style whose own gap could not be detected
+  const [gaps, setGaps] = useState<Record<string, string>>(() =>
+    Object.fromEntries(Object.entries(project.extraction?.config.dashGaps ?? {}).map(([k, v]) => [k, String(v)])),
+  );
   const [show, setShow] = useState<string | null>(null);
   const [lines, setLines] = useState<Pt[][]>([]);
 
@@ -151,7 +156,8 @@ function ProjectSteps({ run, busy, onReview }: { run(label: string, fn: () => Pr
     labelStyles: null,
     existingLabelSlant: slant,
     elevationRange: range[0] !== "" && range[1] !== "" && Number(range[1]) > Number(range[0]) ? [Number(range[0]), Number(range[1])] : null,
-  }), [chosen.join("|"), roles, slant, range]);
+    dashGaps: Object.fromEntries(chosen.filter((k) => Number(gaps[k]) > 0).map((k) => [k, Number(gaps[k])])),
+  }), [chosen.join("|"), roles, slant, range, gaps]);
 
   return (
     <>
@@ -244,7 +250,15 @@ function ProjectSteps({ run, busy, onReview }: { run(label: string, fn: () => Pr
                           </td>
                           <td className="num">{s.paths.toLocaleString()}</td>
                           <td className="num">{cal ? Math.round(s.totalLengthPt * cal.feetPerPoint).toLocaleString() + " ft" : Math.round(s.totalLengthPt) + " pt"}</td>
-                          <td className="small">{s.dashGapPt ? `dashed (gap ${s.dashGapPt} pt)` : "solid or mixed"}{s.glyphLike && !s.dashGapPt ? ", looks like lettering" : ""}</td>
+                          <td className="small">
+                            {s.dashGapPt ? `dashed (gap ${s.dashGapPt} pt)` : "solid or mixed"}{s.glyphLike && !s.dashGapPt ? ", looks like lettering" : ""}
+                            {roles[s.key] && !s.dashGapPt && (
+                              <div>
+                                <input type="number" min={0} step="any" aria-label={`Dash gap for ${s.key}`} placeholder="auto" value={gaps[s.key] ?? ""} style={{ width: 62 }}
+                                  onChange={(e) => setGaps((g) => ({ ...g, [s.key]: e.target.value }))} /> pt gap
+                              </div>
+                            )}
+                          </td>
                           <td>
                             <select value={roles[s.key] ?? ""} onChange={(e) => setRoles((r) => { const n = { ...r }; if (e.target.value) n[s.key] = e.target.value as StyleRole; else delete n[s.key]; return n; })}>
                               <option value="">not a contour</option>
@@ -275,14 +289,18 @@ function ProjectSteps({ run, busy, onReview }: { run(label: string, fn: () => Pr
                   {!cal && <span className="warn inline">Calibrate first.</span>}
                   {cal && chosen.length === 0 && <span className="muted small">Choose at least one contour style.</span>}
                 </div>
-                <p className="muted small">Running again keeps your review decisions on lines that come out the same, and always keeps traced and adopted lines.</p>
+                <p className="muted small">
+                  Running again keeps your review decisions on lines that come out the same, and always keeps traced and adopted lines. If a dashed contour style also
+                  carries other line work, its dash gap cannot be measured: it then borrows the gap of your other contour styles, or you can type one.
+                </p>
               </>
             ) : (
               <p className="small">This page is a scan or has no usable line work, so nothing is extracted automatically. Calibrate it above, then open <b>Terrain review</b> and use <b>Trace a line</b> to draw each contour over the image and type its height.</p>
             )}
             {rep && (
               <div className="okbox">
-                Last run found {rep.contours} candidate lines: {rep.withLabel} with a printed label, {rep.inferred} by counting, {rep.unassigned} without a height. {rep.labelsRead} labels read ({rep.labelsFromPdfText} PDF text, {rep.labelsFromStrokes} stroked).{" "}
+                Last run found {rep.contours} candidate lines: {rep.withLabel} with a printed label, {rep.inferred} by counting, {rep.unassigned} without a height. {rep.labelsRead} labels read ({rep.labelsFromPdfText} PDF text, {rep.labelsFromStrokes} stroked){rep.labelRule ? `; used ${rep.labelRule}` : ""}.
+                {Object.values((rep.dashGaps ?? {}) as Record<string, { gapPt: number | null; how: string }>).some((g) => g.how.startsWith("borrowed")) ? " A dash gap was borrowed for a style that had none of its own." : ""}{" "}
                 <button className="link" onClick={onReview}>Review the result →</button>
               </div>
             )}

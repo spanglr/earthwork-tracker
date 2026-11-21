@@ -75,7 +75,7 @@ def delete(pid: str) -> None:
 
 
 def slug(name: str) -> str:
-    s = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40] or "project"
+    s = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40].strip("-") or "project"
     base, k = s, 2
     while os.path.exists(os.path.join(DATA, s)):
         s = "%s-%d" % (base, k)

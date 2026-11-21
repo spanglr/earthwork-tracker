@@ -149,6 +149,9 @@ finished ground is, so the terrain is never reshaped by them.
    highlighted on the sheet. Set the contour styles to *Existing: index
    contours*, *Existing: intermediate contours* or *Proposed contours*, and
    leave everything else as *not a contour*. If the sheet has a legend, use it.
+   When major and minor contours share one colour and weight, choose
+   *Existing: major and minor in one style*: if they are drawn with two dash
+   patterns the app tells them apart and checks that against the labels.
    Press **Extract contours**.
 
 5. **Review the result in Terrain review.** Nothing is part of the terrain
@@ -239,14 +242,21 @@ the site net is +90.
 3. **Read the labels.** Real PDF text is used when present. Many CAD sheets
    draw lettering as strokes instead, so stick-font digits are recognised by
    shape. Anything that does not match a digit closely is ignored, not guessed.
+   When a sheet colour-codes its labels (grey for existing, black for
+   proposed), only labels in the existing-contour colour or style are used.
 4. **Tie labels to lines.** A label normally sits in a break in its contour.
    The two line ends pointing at it are bridged and the line takes that height.
 5. **Count the rest.** For an unlabeled line, short cross-lines are drawn
    square across it. If a known contour lies on each side and the number of
    lines in between is exactly the height difference divided by the interval,
-   every line in between has a definite height. Each cross-line is a vote, and
+   every line in between has a definite height. Where major and minor lines
+   are drawn differently, every line stepped over must also be the right kind
+   for its height, or the count is thrown out. Each cross-line is a vote, and
    a height is assigned only when the votes agree. A line that cannot be
-   settled this way stays without a height.
+   settled this way stays without a height. Outside the outermost labeled
+   lines the count can only be continued in the same direction, which is wrong
+   across a ditch or a ridge, so those heights carry a warning and are not
+   accepted in bulk.
 6. **Review.** You accept, correct, reject or add lines. Every decision is
    saved with the project.
 7. **Triangulate.** Accepted existing-ground contours are triangulated.
@@ -290,6 +300,7 @@ folder.
 | Only the practice demo appears | The Pittsburgh PDF is not installed. See [The two demos](#the-two-demos). |
 | "No vector line there" when adopting a line | Zoom in and click directly on the line, or trace it instead. Scans have no vector lines. |
 | Extraction finds lines that are not contours | Some other line work shares the contour style. Reject those lines in Terrain review. |
+| A dashed contour style comes out as many short pieces | Its dash gap could not be measured because the style also carries other line work. Type the gap beside that style in Project setup (the other contour styles show theirs) and extract again. |
 | Lines have no height after extraction | The labels were not readable or the count was not consistent. Click the line, read the height on the sheet, and confirm it. |
 | The 3D view has large holes | Neighbouring contours are further apart than the gap limit. Raise *Leave gaps wider than* in Terrain review, if those lines really are neighbours. |
 | Measured scale and printed scale disagree | Normal for a scan or a reduced print. Use the two measured points. |
